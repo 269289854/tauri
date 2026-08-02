@@ -39,12 +39,15 @@ use objc2::rc::Retained;
 use tao::platform::android::{WindowBuilderExtAndroid, WindowExtAndroid};
 #[cfg(target_os = "macos")]
 use tao::platform::macos::{EventLoopWindowTargetExtMacOS, WindowBuilderExtMacOS};
-#[cfg(any(
-  target_os = "linux",
-  target_os = "dragonfly",
-  target_os = "freebsd",
-  target_os = "netbsd",
-  target_os = "openbsd"
+#[cfg(all(
+  any(
+    target_os = "linux",
+    target_os = "dragonfly",
+    target_os = "freebsd",
+    target_os = "netbsd",
+    target_os = "openbsd"
+  ),
+  not(target_env = "ohos")
 ))]
 use tao::platform::unix::{WindowBuilderExtUnix, WindowExtUnix};
 #[cfg(windows)]
@@ -109,7 +112,8 @@ use wry::{
   target_os = "windows",
   target_os = "macos",
   target_os = "ios",
-  target_os = "android"
+  target_os = "android",
+  target_env = "ohos",
 )))]
 use wry::{WebViewBuilderExtUnix, WebViewExtUnix};
 
@@ -119,6 +123,8 @@ pub use tao::platform::ios::{WindowBuilderExtIOS, WindowExtIOS};
 pub use tao::platform::macos::{
   ActivationPolicy as TaoActivationPolicy, EventLoopExtMacOS, WindowExtMacOS,
 };
+#[cfg(target_env = "ohos")]
+pub use tao::platform::ohos::EventLoopBuilderExtOpenHarmony;
 #[cfg(target_os = "macos")]
 use tauri_runtime::ActivationPolicy;
 
@@ -816,12 +822,15 @@ impl WindowBuilder for WindowBuilderWrapper {
       ");
     }
 
-    #[cfg(any(
-      target_os = "linux",
-      target_os = "dragonfly",
-      target_os = "freebsd",
-      target_os = "netbsd",
-      target_os = "openbsd"
+    #[cfg(all(
+      any(
+        target_os = "linux",
+        target_os = "dragonfly",
+        target_os = "freebsd",
+        target_os = "netbsd",
+        target_os = "openbsd"
+      ),
+      not(target_env = "ohos")
     ))]
     {
       // Mouse event is disabled on Linux since sudden event bursts could block event loop.
@@ -1101,12 +1110,15 @@ impl WindowBuilder for WindowBuilderWrapper {
     self
   }
 
-  #[cfg(any(
-    target_os = "linux",
-    target_os = "dragonfly",
-    target_os = "freebsd",
-    target_os = "netbsd",
-    target_os = "openbsd"
+  #[cfg(all(
+    any(
+      target_os = "linux",
+      target_os = "dragonfly",
+      target_os = "freebsd",
+      target_os = "netbsd",
+      target_os = "openbsd",
+    ),
+    not(target_env = "ohos")
   ))]
   fn transient_for(mut self, parent: &impl gtk::glib::IsA<gtk::Window>) -> Self {
     self.inner = self.inner.with_transient_for(parent);
@@ -1177,20 +1189,28 @@ impl WindowBuilder for WindowBuilderWrapper {
     self
   }
 
-  #[cfg(any(
-    windows,
-    target_os = "linux",
-    target_os = "dragonfly",
-    target_os = "freebsd",
-    target_os = "netbsd",
-    target_os = "openbsd"
+  #[cfg(all(
+    any(
+      windows,
+      target_os = "linux",
+      target_os = "dragonfly",
+      target_os = "freebsd",
+      target_os = "netbsd",
+      target_os = "openbsd"
+    ),
+    not(target_env = "ohos")
   ))]
   fn skip_taskbar(mut self, skip: bool) -> Self {
     self.inner = self.inner.with_skip_taskbar(skip);
     self
   }
 
-  #[cfg(any(target_os = "macos", target_os = "ios", target_os = "android"))]
+  #[cfg(any(
+    target_os = "macos",
+    target_os = "ios",
+    target_os = "android",
+    target_env = "ohos"
+  ))]
   fn skip_taskbar(self, _skip: bool) -> Self {
     self
   }
@@ -1258,38 +1278,50 @@ impl WindowBuilder for WindowBuilderWrapper {
   }
 }
 
-#[cfg(any(
-  target_os = "linux",
-  target_os = "dragonfly",
-  target_os = "freebsd",
-  target_os = "netbsd",
-  target_os = "openbsd"
+#[cfg(all(
+  any(
+    target_os = "linux",
+    target_os = "dragonfly",
+    target_os = "freebsd",
+    target_os = "netbsd",
+    target_os = "openbsd",
+  ),
+  not(target_env = "ohos")
 ))]
 pub struct GtkWindow(pub gtk::ApplicationWindow);
-#[cfg(any(
-  target_os = "linux",
-  target_os = "dragonfly",
-  target_os = "freebsd",
-  target_os = "netbsd",
-  target_os = "openbsd"
+#[cfg(all(
+  any(
+    target_os = "linux",
+    target_os = "dragonfly",
+    target_os = "freebsd",
+    target_os = "netbsd",
+    target_os = "openbsd",
+  ),
+  not(target_env = "ohos")
 ))]
 #[allow(clippy::non_send_fields_in_send_ty)]
 unsafe impl Send for GtkWindow {}
 
-#[cfg(any(
-  target_os = "linux",
-  target_os = "dragonfly",
-  target_os = "freebsd",
-  target_os = "netbsd",
-  target_os = "openbsd"
+#[cfg(all(
+  any(
+    target_os = "linux",
+    target_os = "dragonfly",
+    target_os = "freebsd",
+    target_os = "netbsd",
+    target_os = "openbsd",
+  ),
+  not(target_env = "ohos")
 ))]
 pub struct GtkBox(pub gtk::Box);
-#[cfg(any(
-  target_os = "linux",
-  target_os = "dragonfly",
-  target_os = "freebsd",
-  target_os = "netbsd",
-  target_os = "openbsd"
+#[cfg(all(
+  any(
+    target_os = "linux",
+    target_os = "dragonfly",
+    target_os = "freebsd",
+    target_os = "netbsd",
+    target_os = "openbsd",
+  ),
+  not(target_env = "ohos")
 ))]
 #[allow(clippy::non_send_fields_in_send_ty)]
 unsafe impl Send for GtkBox {}
@@ -1331,20 +1363,26 @@ pub enum WindowMessage {
   PrimaryMonitor(Sender<Option<MonitorHandle>>),
   MonitorFromPoint(Sender<Option<MonitorHandle>>, (f64, f64)),
   AvailableMonitors(Sender<Vec<MonitorHandle>>),
-  #[cfg(any(
-    target_os = "linux",
-    target_os = "dragonfly",
-    target_os = "freebsd",
-    target_os = "netbsd",
-    target_os = "openbsd"
+  #[cfg(all(
+    any(
+      target_os = "linux",
+      target_os = "dragonfly",
+      target_os = "freebsd",
+      target_os = "netbsd",
+      target_os = "openbsd",
+    ),
+    not(target_env = "ohos")
   ))]
   GtkWindow(Sender<GtkWindow>),
-  #[cfg(any(
-    target_os = "linux",
-    target_os = "dragonfly",
-    target_os = "freebsd",
-    target_os = "netbsd",
-    target_os = "openbsd"
+  #[cfg(all(
+    any(
+      target_os = "linux",
+      target_os = "dragonfly",
+      target_os = "freebsd",
+      target_os = "netbsd",
+      target_os = "openbsd",
+    ),
+    not(target_env = "ohos")
   ))]
   GtkBox(Sender<GtkBox>),
   #[cfg(target_os = "android")]
@@ -2038,23 +2076,29 @@ impl<T: UserEvent> WindowDispatch<T> for WryWindowDispatcher<T> {
     window_getter!(self, WindowMessage::IsAlwaysOnTop)
   }
 
-  #[cfg(any(
-    target_os = "linux",
-    target_os = "dragonfly",
-    target_os = "freebsd",
-    target_os = "netbsd",
-    target_os = "openbsd"
+  #[cfg(all(
+    any(
+      target_os = "linux",
+      target_os = "dragonfly",
+      target_os = "freebsd",
+      target_os = "netbsd",
+      target_os = "openbsd",
+    ),
+    not(target_env = "ohos")
   ))]
   fn gtk_window(&self) -> Result<gtk::ApplicationWindow> {
     window_getter!(self, WindowMessage::GtkWindow).map(|w| w.0)
   }
 
-  #[cfg(any(
-    target_os = "linux",
-    target_os = "dragonfly",
-    target_os = "freebsd",
-    target_os = "netbsd",
-    target_os = "openbsd"
+  #[cfg(all(
+    any(
+      target_os = "linux",
+      target_os = "dragonfly",
+      target_os = "freebsd",
+      target_os = "netbsd",
+      target_os = "openbsd",
+    ),
+    not(target_env = "ohos")
   ))]
   fn default_vbox(&self) -> Result<gtk::Box> {
     window_getter!(self, WindowMessage::GtkBox).map(|w| w.0)
@@ -2852,12 +2896,20 @@ impl<T: UserEvent> Wry<T> {
       event_loop_builder.with_msg_hook(hook);
     }
 
-    #[cfg(any(
-      target_os = "linux",
-      target_os = "dragonfly",
-      target_os = "freebsd",
-      target_os = "netbsd",
-      target_os = "openbsd"
+    #[cfg(target_env = "ohos")]
+    {
+      event_loop_builder.with_openharmony_app(args.app);
+    }
+
+    #[cfg(all(
+      any(
+        target_os = "linux",
+        target_os = "dragonfly",
+        target_os = "freebsd",
+        target_os = "netbsd",
+        target_os = "openbsd",
+      ),
+      not(target_env = "ohos")
     ))]
     if let Some(app_id) = args.app_id {
       use tao::platform::unix::EventLoopBuilderExtUnix;
@@ -2910,12 +2962,15 @@ impl<T: UserEvent> Runtime<T> for Wry<T> {
   fn new(args: RuntimeInitArgs) -> Result<Self> {
     Self::init_with_builder(EventLoopBuilder::<Message<T>>::with_user_event(), args)
   }
-  #[cfg(any(
-    target_os = "linux",
-    target_os = "dragonfly",
-    target_os = "freebsd",
-    target_os = "netbsd",
-    target_os = "openbsd"
+  #[cfg(all(
+    any(
+      target_os = "linux",
+      target_os = "dragonfly",
+      target_os = "freebsd",
+      target_os = "netbsd",
+      target_os = "openbsd",
+    ),
+    not(target_env = "ohos")
   ))]
   fn new_any_thread(args: RuntimeInitArgs) -> Result<Self> {
     use tao::platform::unix::EventLoopBuilderExtUnix;
@@ -2930,6 +2985,11 @@ impl<T: UserEvent> Runtime<T> for Wry<T> {
     let mut event_loop_builder = EventLoopBuilder::<Message<T>>::with_user_event();
     event_loop_builder.with_any_thread(true);
     Self::init_with_builder(event_loop_builder, args)
+  }
+
+  #[cfg(target_env = "ohos")]
+  fn new_any_thread(args: RuntimeInitArgs) -> Result<Self> {
+    unimplemented!()
   }
 
   fn create_proxy(&self) -> EventProxy<T> {
@@ -3361,20 +3421,26 @@ fn handle_user_message<T: UserEvent>(
           WindowMessage::AvailableMonitors(tx) => {
             tx.send(window.available_monitors().collect()).unwrap()
           }
-          #[cfg(any(
-            target_os = "linux",
-            target_os = "dragonfly",
-            target_os = "freebsd",
-            target_os = "netbsd",
-            target_os = "openbsd"
+          #[cfg(all(
+            any(
+              target_os = "linux",
+              target_os = "dragonfly",
+              target_os = "freebsd",
+              target_os = "netbsd",
+              target_os = "openbsd"
+            ),
+            not(target_env = "ohos")
           ))]
           WindowMessage::GtkWindow(tx) => tx.send(GtkWindow(window.gtk_window().clone())).unwrap(),
-          #[cfg(any(
-            target_os = "linux",
-            target_os = "dragonfly",
-            target_os = "freebsd",
-            target_os = "netbsd",
-            target_os = "openbsd"
+          #[cfg(all(
+            any(
+              target_os = "linux",
+              target_os = "dragonfly",
+              target_os = "freebsd",
+              target_os = "netbsd",
+              target_os = "openbsd"
+            ),
+            not(target_env = "ohos")
           ))]
           WindowMessage::GtkBox(tx) => tx
             .send(GtkBox(window.default_vbox().unwrap().clone()))
@@ -3504,13 +3570,16 @@ fn handle_user_message<T: UserEvent>(
           }
           #[allow(unused_variables)]
           WindowMessage::SetSkipTaskbar(skip) => {
-            #[cfg(any(
-              windows,
-              target_os = "linux",
-              target_os = "dragonfly",
-              target_os = "freebsd",
-              target_os = "netbsd",
-              target_os = "openbsd"
+            #[cfg(all(
+              any(
+                windows,
+                target_os = "linux",
+                target_os = "dragonfly",
+                target_os = "freebsd",
+                target_os = "netbsd",
+                target_os = "openbsd"
+              ),
+              not(target_env = "ohos")
             ))]
             let _ = window.set_skip_taskbar(skip);
           }
@@ -3556,12 +3625,15 @@ fn handle_user_message<T: UserEvent>(
             #[cfg(target_os = "macos")]
             window.set_badge_label(_count.map(|x| x.to_string()));
 
-            #[cfg(any(
-              target_os = "linux",
-              target_os = "dragonfly",
-              target_os = "freebsd",
-              target_os = "netbsd",
-              target_os = "openbsd"
+            #[cfg(all(
+              any(
+                target_os = "linux",
+                target_os = "dragonfly",
+                target_os = "freebsd",
+                target_os = "netbsd",
+                target_os = "openbsd",
+              ),
+              not(target_env = "ohos")
             ))]
             window.set_badge_count(_count, _desktop_filename);
           }
@@ -3614,14 +3686,17 @@ fn handle_user_message<T: UserEvent>(
       }
     }
     Message::Webview(window_id, webview_id, webview_message) => {
-      #[cfg(any(
-        target_os = "macos",
-        windows,
-        target_os = "linux",
-        target_os = "dragonfly",
-        target_os = "freebsd",
-        target_os = "netbsd",
-        target_os = "openbsd"
+      #[cfg(all(
+        any(
+          target_os = "macos",
+          windows,
+          target_os = "linux",
+          target_os = "dragonfly",
+          target_os = "freebsd",
+          target_os = "netbsd",
+          target_os = "openbsd"
+        ),
+        not(target_env = "ohos")
       ))]
       if let WebviewMessage::Reparent(new_parent_window_id, tx) = webview_message {
         let webview_handle = windows.0.borrow_mut().get_mut(&window_id).and_then(|w| {
@@ -3646,12 +3721,15 @@ fn handle_user_message<T: UserEvent>(
             #[cfg(windows)]
             let reparent_result = { webview.inner.reparent(new_parent_window.hwnd()) };
 
-            #[cfg(any(
-              target_os = "linux",
-              target_os = "dragonfly",
-              target_os = "freebsd",
-              target_os = "netbsd",
-              target_os = "openbsd"
+            #[cfg(all(
+              any(
+                target_os = "linux",
+                target_os = "dragonfly",
+                target_os = "freebsd",
+                target_os = "netbsd",
+                target_os = "openbsd",
+              ),
+              not(target_env = "ohos")
             ))]
             let reparent_result = {
               if let Some(container) = new_parent_window.default_vbox() {
@@ -3928,12 +4006,15 @@ fn handle_user_message<T: UserEvent>(
             }
           },
           WebviewMessage::WithWebview(f) => {
-            #[cfg(any(
-              target_os = "linux",
-              target_os = "dragonfly",
-              target_os = "freebsd",
-              target_os = "netbsd",
-              target_os = "openbsd"
+            #[cfg(all(
+              any(
+                target_os = "linux",
+                target_os = "dragonfly",
+                target_os = "freebsd",
+                target_os = "netbsd",
+                target_os = "openbsd",
+              ),
+              not(target_env = "ohos")
             ))]
             {
               f(webview.webview());
@@ -4476,6 +4557,7 @@ fn create_window<T: UserEvent, F: Fn(RawWindow) + Send + 'static>(
         }
       }
 
+      #[cfg(not(target_env = "ohos"))]
       if let Some(margin) = window_builder.prevent_overflow {
         let work_area = monitor.work_area();
         let margin = margin.to_physical::<u32>(scale_factor);
@@ -4509,7 +4591,10 @@ fn create_window<T: UserEvent, F: Fn(RawWindow) + Send + 'static>(
     }
   };
 
-  #[cfg(any(target_os = "macos", target_os = "linux"))]
+  #[cfg(all(
+    any(target_os = "macos", target_os = "linux"),
+    not(target_env = "ohos")
+  ))]
   let (initial_position, is_fullscreen) = (
     window_builder.inner.window.position,
     window_builder.inner.window.fullscreen.is_some(),
@@ -4517,7 +4602,10 @@ fn create_window<T: UserEvent, F: Fn(RawWindow) + Send + 'static>(
 
   // If fullscreen is requested with an explicit position, resolve the target
   // monitor up front so the window is created fullscreen on that display.
-  #[cfg(any(target_os = "macos", target_os = "linux"))]
+  #[cfg(all(
+    any(target_os = "macos", target_os = "linux"),
+    not(target_env = "ohos")
+  ))]
   if let (true, Some(position)) = (is_fullscreen, initial_position) {
     if let Some(target_monitor) =
       find_monitor_for_position(event_loop.available_monitors(), position)
@@ -4562,20 +4650,26 @@ fn create_window<T: UserEvent, F: Fn(RawWindow) + Send + 'static>(
     let raw = RawWindow {
       #[cfg(windows)]
       hwnd: window.hwnd(),
-      #[cfg(any(
-        target_os = "linux",
-        target_os = "dragonfly",
-        target_os = "freebsd",
-        target_os = "netbsd",
-        target_os = "openbsd"
+      #[cfg(all(
+        any(
+          target_os = "linux",
+          target_os = "dragonfly",
+          target_os = "freebsd",
+          target_os = "netbsd",
+          target_os = "openbsd"
+        ),
+        not(target_env = "ohos")
       ))]
       gtk_window: window.gtk_window(),
-      #[cfg(any(
-        target_os = "linux",
-        target_os = "dragonfly",
-        target_os = "freebsd",
-        target_os = "netbsd",
-        target_os = "openbsd"
+      #[cfg(all(
+        any(
+          target_os = "linux",
+          target_os = "dragonfly",
+          target_os = "freebsd",
+          target_os = "netbsd",
+          target_os = "openbsd"
+        ),
+        not(target_env = "ohos")
       ))]
       default_vbox: window.default_vbox(),
       _marker: &std::marker::PhantomData,
@@ -4858,12 +4952,15 @@ You may have it installed on another user account, but it is not available for t
           wry::NewWindowResponse::Create {
             #[cfg(target_os = "macos")]
             webview: wry::WebViewExtMacOS::webview(&*webview).as_super().into(),
-            #[cfg(any(
-              target_os = "linux",
-              target_os = "dragonfly",
-              target_os = "freebsd",
-              target_os = "netbsd",
-              target_os = "openbsd",
+            #[cfg(all(
+              any(
+                target_os = "linux",
+                target_os = "dragonfly",
+                target_os = "freebsd",
+                target_os = "netbsd",
+                target_os = "openbsd",
+              ),
+              not(target_env = "ohos")
             ))]
             webview: webview.webview(),
             #[cfg(windows)]
@@ -4993,13 +5090,16 @@ You may have it installed on another user account, but it is not available for t
       .with_browser_extensions_enabled(webview_attributes.browser_extensions_enabled);
   }
 
-  #[cfg(any(
-    windows,
-    target_os = "linux",
-    target_os = "dragonfly",
-    target_os = "freebsd",
-    target_os = "netbsd",
-    target_os = "openbsd"
+  #[cfg(all(
+    any(
+      windows,
+      target_os = "linux",
+      target_os = "dragonfly",
+      target_os = "freebsd",
+      target_os = "netbsd",
+      target_os = "openbsd",
+    ),
+    not(target_env = "ohos")
   ))]
   {
     if let Some(path) = &webview_attributes.extensions_path {
@@ -5007,12 +5107,15 @@ You may have it installed on another user account, but it is not available for t
     }
   }
 
-  #[cfg(any(
-    target_os = "linux",
-    target_os = "dragonfly",
-    target_os = "freebsd",
-    target_os = "netbsd",
-    target_os = "openbsd"
+  #[cfg(all(
+    any(
+      target_os = "linux",
+      target_os = "dragonfly",
+      target_os = "freebsd",
+      target_os = "netbsd",
+      target_os = "openbsd",
+    ),
+    not(target_env = "ohos")
   ))]
   {
     if let Some(related_view) = webview_attributes.related_view {
@@ -5094,12 +5197,15 @@ You may have it installed on another user account, but it is not available for t
   for (scheme, protocol) in uri_scheme_protocols {
     // on Linux the custom protocols are associated with the web context
     // and you cannot register a scheme more than once
-    #[cfg(any(
-      target_os = "linux",
-      target_os = "dragonfly",
-      target_os = "freebsd",
-      target_os = "netbsd",
-      target_os = "openbsd"
+    #[cfg(all(
+      any(
+        target_os = "linux",
+        target_os = "dragonfly",
+        target_os = "freebsd",
+        target_os = "netbsd",
+        target_os = "openbsd",
+      ),
+      not(target_env = "ohos")
     ))]
     {
       if web_context.registered_custom_protocols.contains(&scheme) {
@@ -5146,7 +5252,8 @@ You may have it installed on another user account, but it is not available for t
       target_os = "windows",
       target_os = "macos",
       target_os = "ios",
-      target_os = "android"
+      target_os = "android",
+      target_env = "ohos"
     )))]
     WebviewKind::WindowChild => {
       // only way to account for menu bar height, and also works for multiwebviews :)
@@ -5157,7 +5264,8 @@ You may have it installed on another user account, but it is not available for t
       target_os = "windows",
       target_os = "macos",
       target_os = "ios",
-      target_os = "android"
+      target_os = "android",
+      target_env = "ohos"
     ))]
     WebviewKind::WindowChild => webview_builder.build_as_child(&window),
     WebviewKind::WindowContent => {
@@ -5165,14 +5273,16 @@ You may have it installed on another user account, but it is not available for t
         target_os = "windows",
         target_os = "macos",
         target_os = "ios",
-        target_os = "android"
+        target_os = "android",
+        target_env = "ohos"
       ))]
       let builder = webview_builder.build(&window);
       #[cfg(not(any(
         target_os = "windows",
         target_os = "macos",
         target_os = "ios",
-        target_os = "android"
+        target_os = "android",
+        target_env = "ohos"
       )))]
       let builder = {
         let vbox = window.default_vbox().unwrap();
@@ -5184,12 +5294,15 @@ You may have it installed on another user account, but it is not available for t
   .map_err(|e| Error::CreateWebview(Box::new(e)))?;
 
   if kind == WebviewKind::WindowContent {
-    #[cfg(any(
-      target_os = "linux",
-      target_os = "dragonfly",
-      target_os = "freebsd",
-      target_os = "netbsd",
-      target_os = "openbsd"
+    #[cfg(all(
+      any(
+        target_os = "linux",
+        target_os = "dragonfly",
+        target_os = "freebsd",
+        target_os = "netbsd",
+        target_os = "openbsd",
+      ),
+      not(target_env = "ohos")
     ))]
     undecorated_resizing::attach_resize_handler(&webview);
     #[cfg(windows)]

@@ -88,6 +88,9 @@ mod error;
 mod event;
 pub mod ipc;
 mod manager;
+#[doc(hidden)]
+#[cfg(target_env = "ohos")]
+pub mod ohos;
 mod pattern;
 pub mod plugin;
 pub(crate) mod protocol;

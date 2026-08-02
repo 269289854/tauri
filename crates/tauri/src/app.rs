@@ -1161,6 +1161,11 @@ macro_rules! shared_app_impl {
 
         rx.recv().unwrap_or(false)
       }
+
+      #[cfg(target_env = "ohos")]
+      pub fn supports_multiple_windows(&self) -> bool {
+        false
+      }
     }
 
     impl<R: Runtime> Listener<R> for $app {
@@ -2264,12 +2269,15 @@ tauri::Builder::default()
       self.invoke_key,
     ));
 
-    #[cfg(any(
-      target_os = "linux",
-      target_os = "dragonfly",
-      target_os = "freebsd",
-      target_os = "netbsd",
-      target_os = "openbsd"
+    #[cfg(all(
+      any(
+        target_os = "linux",
+        target_os = "dragonfly",
+        target_os = "freebsd",
+        target_os = "netbsd",
+        target_os = "openbsd",
+      ),
+      not(target_env = "ohos")
     ))]
     let app_id = if manager.config.app.enable_gtk_app_id {
       Some(manager.config.identifier.clone())
@@ -2278,12 +2286,15 @@ tauri::Builder::default()
     };
 
     let runtime_args = RuntimeInitArgs {
-      #[cfg(any(
-        target_os = "linux",
-        target_os = "dragonfly",
-        target_os = "freebsd",
-        target_os = "netbsd",
-        target_os = "openbsd"
+      #[cfg(all(
+        any(
+          target_os = "linux",
+          target_os = "dragonfly",
+          target_os = "freebsd",
+          target_os = "netbsd",
+          target_os = "openbsd"
+        ),
+        not(target_env = "ohos")
       ))]
       app_id,
 
@@ -2306,6 +2317,13 @@ tauri::Builder::default()
           }
         }))
       },
+
+      #[cfg(target_env = "ohos")]
+      app: crate::ohos::APP
+        .lock()
+        .unwrap()
+        .take()
+        .expect("OpenHarmony app instance not initialized"),
     };
 
     // The env var must be set before the Runtime is created so that GetAvailableBrowserVersionString picks it up.

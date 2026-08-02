@@ -38,13 +38,17 @@ pub fn run_app<R: Runtime, F: FnOnce(&App<R>) + Send + 'static>(
   builder: tauri::Builder<R>,
   setup: F,
 ) {
+  #[cfg(not(target_env = "ohos"))]
   let builder = builder
     .plugin(
       tauri_plugin_log::Builder::default()
         .level(log::LevelFilter::Info)
         .build(),
     )
-    .plugin(tauri_plugin_sample::init())
+    .plugin(tauri_plugin_sample::init());
+
+  #[allow(unused_mut)]
+  let mut builder = builder
     .setup(move |app| {
       #[cfg(all(desktop, not(test)))]
       {
@@ -110,17 +114,20 @@ pub fn run_app<R: Runtime, F: FnOnce(&App<R>) + Send + 'static>(
       #[cfg(debug_assertions)]
       webview.open_devtools();
 
-      let value = Some("test".to_string());
-      let response = app.sample().ping(PingRequest {
-        value: value.clone(),
-        on_event: Channel::new(|event| {
-          println!("got channel event: {event:?}");
-          Ok(())
-        }),
-      });
-      log::info!("got response: {response:?}");
-      if let Ok(res) = response {
-        assert_eq!(res.value, value);
+      #[cfg(not(target_env = "ohos"))]
+      {
+        let value = Some("test".to_string());
+        let response = app.sample().ping(PingRequest {
+          value: value.clone(),
+          on_event: Channel::new(|event| {
+            println!("got channel event: {event:?}");
+            Ok(())
+          }),
+        });
+        log::info!("got response: {response:?}");
+        if let Ok(res) = response {
+          assert_eq!(res.value, value);
+        }
       }
 
       setup(app);

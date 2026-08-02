@@ -37,6 +37,8 @@ pub enum Target {
   /// iOS.
   #[serde(rename = "iOS")]
   Ios,
+  /// OpenHarmony.
+  OpenHarmony,
 }
 
 impl Display for Target {
@@ -50,6 +52,7 @@ impl Display for Target {
         Self::Linux => "linux",
         Self::Android => "android",
         Self::Ios => "iOS",
+        Self::OpenHarmony => "open-harmony",
       }
     )
   }
@@ -66,6 +69,8 @@ impl Target {
       Self::Android
     } else if target.contains("ios") {
       Self::Ios
+    } else if target.contains("ohos") {
+      Self::OpenHarmony
     } else {
       Self::Linux
     }
@@ -81,6 +86,8 @@ impl Target {
       Self::Ios
     } else if cfg!(target_os = "android") {
       Self::Android
+    } else if cfg!(target_env = "ohos") {
+      Self::OpenHarmony
     } else {
       Self::Linux
     }
@@ -88,7 +95,7 @@ impl Target {
 
   /// Whether the target is mobile or not.
   pub fn is_mobile(&self) -> bool {
-    matches!(self, Target::Android | Target::Ios)
+    matches!(self, Target::Android | Target::Ios | Target::OpenHarmony)
   }
 
   /// Whether the target is desktop or not.
@@ -304,7 +311,7 @@ fn resource_dir_from<P: AsRef<std::path::Path>>(
   #[allow(unused_mut, unused_assignments)]
   let mut res = Err(crate::Error::UnsupportedPlatform);
 
-  #[cfg(target_os = "linux")]
+  #[cfg(all(target_os = "linux", not(target_env = "ohos")))]
   {
     // (canonicalize checks for existence, so there's no need for an extra check)
     res = if let Ok(bundle_dir) = exe_dir
@@ -386,6 +393,7 @@ mod build {
         Self::Windows => quote! { #prefix::Windows },
         Self::Android => quote! { #prefix::Android },
         Self::Ios => quote! { #prefix::Ios },
+        Self::OpenHarmony => quote! { #prefix::OpenHarmony },
       });
     }
   }
@@ -426,7 +434,7 @@ mod tests {
     let resource_dir = super::resource_dir_from(&path, &package_info, &env);
     #[cfg(target_os = "macos")]
     assert!(resource_dir.is_err());
-    #[cfg(target_os = "linux")]
+    #[cfg(all(target_os = "linux", not(target_env = "ohos")))]
     assert_eq!(resource_dir.unwrap(), PathBuf::from("/usr/lib/MyApp"));
     #[cfg(windows)]
     assert_eq!(resource_dir.unwrap(), path.parent().unwrap());

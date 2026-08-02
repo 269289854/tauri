@@ -29,7 +29,7 @@ mod plugin;
 mod remove;
 mod signer;
 
-use clap::{ArgAction, CommandFactory, FromArgMatches, Parser, Subcommand, ValueEnum};
+use clap::{ArgAction, CommandFactory, FromArgMatches, Parser, Subcommand};
 use env_logger::fmt::style::{AnsiColor, Style};
 use env_logger::Builder;
 pub use error::{Error, ErrorExt, Result};
@@ -39,7 +39,6 @@ use std::io::{BufReader, Write};
 use std::process::{exit, Command, ExitStatus, Output, Stdio};
 use std::{
   ffi::OsString,
-  fmt::Display,
   fs::read_to_string,
   io::BufRead,
   path::PathBuf,
@@ -89,29 +88,6 @@ impl FromStr for ConfigValue {
   }
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
-pub enum RunMode {
-  Desktop,
-  #[cfg(target_os = "macos")]
-  Ios,
-  Android,
-}
-
-impl Display for RunMode {
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    write!(
-      f,
-      "{}",
-      match self {
-        Self::Desktop => "desktop",
-        #[cfg(target_os = "macos")]
-        Self::Ios => "iOS",
-        Self::Android => "android",
-      }
-    )
-  }
-}
-
 #[derive(Deserialize)]
 pub struct VersionMetadata {
   tauri: String,
@@ -154,6 +130,8 @@ enum Commands {
   Build(build::Options),
   Bundle(bundle::Options),
   Android(mobile::android::Cli),
+  #[clap(name("ohos"), alias("oh"), alias("open-harmony"), alias("openharmony"))]
+  OpenHarmony(mobile::open_harmony::Cli),
   #[cfg(target_os = "macos")]
   Ios(mobile::ios::Cli),
   /// Migrate from v1 to v2
@@ -225,7 +203,7 @@ where
     Ok(s) => s,
     Err(e) => e.exit(),
   };
-  // set the verbosity level so subsequent CLI calls (xcode-script, android-studio-script) refer to it
+  // set the verbosity level so subsequent CLI calls (xcode-script, android-studio-script, dev-eco-studio-script) refer to it
   let verbosity_number = get_verbosity(cli.verbose);
   std::env::set_var("TAURI_CLI_VERBOSITY", verbosity_number.to_string());
 
@@ -294,6 +272,7 @@ where
     Commands::Permission(options) => acl::permission::command(options)?,
     Commands::Capability(options) => acl::capability::command(options)?,
     Commands::Android(c) => mobile::android::command(c, cli.verbose)?,
+    Commands::OpenHarmony(c) => mobile::open_harmony::command(c, cli.verbose)?,
     #[cfg(target_os = "macos")]
     Commands::Ios(c) => mobile::ios::command(c, cli.verbose)?,
     Commands::Migrate => migrate::command()?,

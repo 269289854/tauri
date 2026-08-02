@@ -83,10 +83,20 @@ pub fn entry_point(_attributes: TokenStream, item: TokenStream) -> TokenStream {
       }
 
       // be careful when renaming this, the `start_app` symbol is checked by the CLI
-      #[cfg(not(target_os = "android"))]
+      #[cfg(target_os = "ios")]
       #[no_mangle]
       #[inline(never)]
       pub extern "C" fn start_app() {
+        _start_app()
+      }
+
+      #[cfg(target_env = "ohos")]
+      use ::tauri::ohos::*;
+
+      #[cfg(target_env = "ohos")]
+      #[::tauri::ohos::openharmony_ability_derive::ability(webview, protocol = "tauri,ipc,asset,isolation")]
+      pub fn openharmony(app: ::tauri::ohos::openharmony_ability::OpenHarmonyApp) {
+        ::tauri::ohos::APP.lock().unwrap().replace(app);
         _start_app()
       }
     )
