@@ -14,7 +14,7 @@ function tauriPlugin(): HvigorPlugin {
     apply(node: HvigorNode) {
       const buildRustCode = () => {
         const properties = hvigor.getParameter().getProperties();
-        const target = properties.target || "aarch64";
+        const target = properties.target || "x86_64";
         execFileSync(`{{tauri-binary}}`,
           [{{quote-and-join tauri-binary-args}}, "--target", target.toString()], {
             cwd: resolve(__dirname, "{{root-dir-rel}}"),

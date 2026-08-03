@@ -57,8 +57,12 @@ pub(crate) fn setup(
   #[allow(unused_variables)] ios_path: Option<PathBuf>,
 ) -> Result<()> {
   let target_os = std::env::var("CARGO_CFG_TARGET_OS").unwrap();
-  let target_env = std::env::var("CARGO_CFG_TARGET_ENV").unwrap_or_default();
-  let mobile = target_os == "ios" || target_os == "android" || target_env == "ohos";
+  // OpenHarmony plugins currently use their Rust fallback implementations.
+  // Marking OHOS as `mobile` here conflicts with the plugins' own build
+  // scripts, which see the linux-based OHOS target as `desktop`; enabling
+  // both aliases produces duplicate APIs and missing Android/iOS handles.
+  // The application crate itself is still marked as mobile by tauri-build.
+  let mobile = target_os == "ios" || target_os == "android";
   cfg_alias("desktop", !mobile);
   cfg_alias("mobile", mobile);
 
