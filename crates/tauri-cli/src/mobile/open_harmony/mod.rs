@@ -165,6 +165,23 @@ pub fn get_config(
 }
 
 pub fn env() -> Result<Env> {
+  #[cfg(windows)]
+  if std::env::var_os("DEV_ECO_STUDIO_INSTALL_PATH").is_none() {
+    for drive in b'C'..=b'Z' {
+      let install_path = std::path::PathBuf::from(format!(
+        "{}:\\Program Files\\Huawei\\DevEco Studio",
+        drive as char
+      ));
+      if install_path
+        .join("tools/ohpm/bin/ohpm.bat")
+        .is_file()
+      {
+        set_var("DEV_ECO_STUDIO_INSTALL_PATH", install_path);
+        break;
+      }
+    }
+  }
+
   let env = super::env().context("failed to setup OpenHarmony environment")?;
   cargo_mobile2::open_harmony::env::Env::from_env(env)
     .context("failed to load OpenHarmony environment")
