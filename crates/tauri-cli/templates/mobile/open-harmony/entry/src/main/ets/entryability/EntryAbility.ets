@@ -3,6 +3,10 @@ import Want from '@ohos.app.ability.Want'
 import { AbilityConstant } from '@kit.AbilityKit';
 import window from '@ohos.window';
 
+interface BackwardCapable {
+  backwardIfPossible: () => boolean;
+}
+
 export default class EntryAbility extends RustAbility {
   // change to dynamic library name
   public moduleName: string = "{{app.lib-name}}"
@@ -27,9 +31,9 @@ export default class EntryAbility extends RustAbility {
    */
   onBackPressed(): boolean {
     try {
-      const controller = AppStorage.get<ESObject>(
+      const controller = AppStorage.get<BackwardCapable>(
         "ohos.rs.ability.webviewController",
-      ) as unknown as { backwardIfPossible?: () => boolean } | undefined;
+      );
       if (controller && typeof controller.backwardIfPossible === "function") {
         return controller.backwardIfPossible();
       }
