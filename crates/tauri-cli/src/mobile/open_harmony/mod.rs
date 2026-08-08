@@ -24,6 +24,7 @@ use clap::{Parser, Subcommand};
 use std::{
   env::set_var,
   fs::{create_dir_all, write},
+  path::PathBuf,
   thread::sleep,
   time::Duration,
 };
@@ -167,24 +168,36 @@ pub fn get_config(
 pub fn env() -> Result<Env> {
   #[cfg(windows)]
   if std::env::var_os("DEV_ECO_STUDIO_INSTALL_PATH").is_none() {
-    for drive in b'C'..=b'Z' {
-      let install_path = std::path::PathBuf::from(format!(
-        "{}:\\Program Files\\Huawei\\DevEco Studio",
-        drive as char
-      ));
-      if install_path
-        .join("tools/ohpm/bin/ohpm.bat")
-        .is_file()
-      {
-        set_var("DEV_ECO_STUDIO_INSTALL_PATH", install_path);
-        break;
-      }
+    if let Some(install_path) = detect_dev_eco_studio_install() {
+      set_var("DEV_ECO_STUDIO_INSTALL_PATH", install_path);
     }
   }
 
   let env = super::env().context("failed to setup OpenHarmony environment")?;
   cargo_mobile2::open_harmony::env::Env::from_env(env)
     .context("failed to load OpenHarmony environment")
+}
+
+/// Locate a DevEco Studio installation from the `ohpm` executable that
+/// DevEco Studio puts on PATH (`<install>\tools\ohpm\bin\ohpm.bat`), going up
+/// three levels to the install root and verifying it with the sibling
+/// `tools\hvigor\bin\hvigorw.bat`. Only used on Windows when
+/// `DEV_ECO_STUDIO_INSTALL_PATH` is not set, and covers installs on any drive
+/// without scanning drives for a well-known folder.
+#[cfg(windows)]
+fn detect_dev_eco_studio_install() -> Option<PathBuf> {
+  let path_var = std::env::var_os("PATH")?;
+  for dir in std::env::split_paths(&path_var) {
+    if dir.join("ohpm.bat").is_file() {
+      // dir is <install>\tools\ohpm\bin; three levels up is the install root
+      if let Some(install) = dir.ancestors().nth(3) {
+        if install.join("tools/hvigor/bin/hvigorw.bat").is_file() {
+          return Some(install.to_path_buf());
+        }
+      }
+    }
+  }
+  None
 }
 
 fn delete_codegen_vars() {

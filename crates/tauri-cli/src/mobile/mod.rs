@@ -411,13 +411,13 @@ fn read_options(config: &ConfigMetadata) -> CliOptions {
         }
       };
       let client: Client = ClientBuilder::default().build_with_tokio(tx, rx);
-      let options: CliOptions = client
-        .request("options", rpc_params![])
-        .await
-        .unwrap_or_else(|e| {
+      let options: CliOptions = match client.request("options", rpc_params!()).await {
+        Ok(options) => options,
+        Err(e) => {
           log::warn!("failed to request options from dev server: {e}; using default CLI options");
-          CliOptions::default()
-        });
+          return Ok::<CliOptions, Error>(CliOptions::default());
+        }
+      };
       Ok::<CliOptions, Error>(options)
     })
     .expect("failed to read CLI options");
