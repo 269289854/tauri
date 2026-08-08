@@ -638,12 +638,12 @@ fn android(
     log::info!(action = "Android"; "Creating {}", entry.name);
     // Adaptive-icon foreground must sit inside the 66dp/108dp safe zone;
     // a full-bleed source gets cropped by the system mask. Center the
-    // content at `android_fg_scale` (default 80%) like the launcher
+    // content at `android_fg_scale` (default 85%) like the launcher
     // synthesis below.
     let fg_scale = manifest
       .as_ref()
       .and_then(|manifest| manifest.android_fg_scale)
-      .unwrap_or(80.0);
+      .unwrap_or(85.0);
     let fg = resize_asset(
       &fg_source.as_ref().unwrap_or(source).resize_exact(entry.size),
       entry.size,
