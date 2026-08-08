@@ -636,13 +636,27 @@ fn android(
 
   for entry in entries.foreground {
     log::info!(action = "Android"; "Creating {}", entry.name);
-    resize_and_save_png(
-      fg_source.as_ref().unwrap_or(source),
+    // Adaptive-icon foreground must sit inside the 66dp/108dp safe zone;
+    // a full-bleed source gets cropped by the system mask. Center the
+    // content at `android_fg_scale` (default 80%) like the launcher
+    // synthesis below.
+    let fg_scale = manifest
+      .as_ref()
+      .and_then(|manifest| manifest.android_fg_scale)
+      .unwrap_or(80.0);
+    let fg = resize_asset(
+      &fg_source.as_ref().unwrap_or(source).resize_exact(entry.size),
       entry.size,
-      &entry.out_path,
-      None,
-      None,
-    )?;
+      fg_scale,
+    );
+    let mut out_file = BufWriter::new(
+      File::create(&entry.out_path)
+        .fs_context("failed to create Android foreground", &entry.out_path)?,
+    );
+    write_png(fg.as_bytes(), &mut out_file, entry.size).context("failed to write Android foreground")?;
+    out_file
+      .flush()
+      .fs_context("failed to flush Android foreground", &entry.out_path)?;
   }
 
   let mut bg_source = None;
