@@ -24,10 +24,12 @@ export default class EntryAbility extends RustAbility {
   }
 
   /**
-   * 返回键处理：任一 WebView 可后退则执行 WebView 后退并消费事件，
-   * 而不是退出应用；无历史时走系统默认。controller 由
-   * DefaultXComponent 注册到 AppStorage（本 SDK 无
-   * getAllWebControllers/findControllerByName 静态 API）。
+   * Back key handling: when any WebView can navigate back, go back and
+   * consume the event instead of exiting the app; fall through to the
+   * system default when there is no history. The controller is registered
+   * by the openharmony-ability DefaultXComponent under this key when the
+   * WebView is created (this SDK exposes no getAllWebControllers /
+   * findControllerByName static API).
    */
   onBackPressed(): boolean {
     try {
