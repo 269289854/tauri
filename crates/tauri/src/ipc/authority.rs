@@ -24,6 +24,29 @@ use crate::{AppHandle, Manager, StateManager, Webview};
 
 use super::{CommandArg, CommandItem};
 
+#[cfg(feature = "dynamic-acl")]
+fn offset_resolved_scope_ids(resolved: &mut Resolved, offset: ScopeKey) {
+  if offset == 0 {
+    return;
+  }
+
+  resolved.command_scope = std::mem::take(&mut resolved.command_scope)
+    .into_iter()
+    .map(|(scope_id, scope)| (scope_id + offset, scope))
+    .collect();
+
+  for command in resolved
+    .allowed_commands
+    .values_mut()
+    .chain(resolved.denied_commands.values_mut())
+    .flatten()
+  {
+    if let Some(scope_id) = &mut command.scope_id {
+      *scope_id += offset;
+    }
+  }
+}
+
 /// The runtime authority used to authorize IPC execution based on the Access Control List.
 pub struct RuntimeAuthority {
   #[cfg(any(feature = "dynamic-acl", debug_assertions))]
@@ -171,12 +194,25 @@ impl RuntimeAuthority {
       }
     }
 
-    let resolved = Resolved::resolve(
+    let mut resolved = Resolved::resolve(
       &self.acl,
       capabilities,
       tauri_utils::platform::Target::current(),
     )
     .unwrap();
+
+    // `Resolved::resolve` numbers command scopes from one on every call. A
+    // dynamically-added capability must not overwrite scopes that were loaded
+    // when the application started, or commands can deserialize another
+    // plugin's scope type (for example HTTP `{ url }` as an FS entry).
+    let existing_scope_id = self
+      .scope_manager
+      .command_scope
+      .keys()
+      .next_back()
+      .copied()
+      .unwrap_or_default();
+    offset_resolved_scope_ids(&mut resolved, existing_scope_id);
 
     // fill global scope
     for (plugin, global_scope) in resolved.global_scope {
@@ -823,6 +859,58 @@ mod tests {
   use crate::ipc::Origin;
 
   use super::RuntimeAuthority;
+
+  #[cfg(feature = "dynamic-acl")]
+  #[test]
+  fn dynamic_capability_scope_ids_do_not_collide_with_existing_scopes() {
+    use tauri_utils::acl::{resolved::ResolvedScope, Value};
+
+    let mut resolved = Resolved {
+      allowed_commands: [(
+        "plugin:fs|open".into(),
+        vec![ResolvedCommand {
+          scope_id: Some(1),
+          ..Default::default()
+        }],
+      )]
+      .into_iter()
+      .collect(),
+      denied_commands: [(
+        "plugin:fs|remove".into(),
+        vec![ResolvedCommand {
+          scope_id: Some(1),
+          ..Default::default()
+        }],
+      )]
+      .into_iter()
+      .collect(),
+      command_scope: [(
+        1,
+        ResolvedScope {
+          allow: vec![Value::String("$APPDATA/books/**".into())],
+          deny: Vec::new(),
+        },
+      )]
+      .into_iter()
+      .collect(),
+      ..Default::default()
+    };
+
+    super::offset_resolved_scope_ids(&mut resolved, 7);
+
+    assert_eq!(
+      resolved.command_scope.keys().copied().collect::<Vec<_>>(),
+      [8]
+    );
+    assert_eq!(
+      resolved.allowed_commands["plugin:fs|open"][0].scope_id,
+      Some(8)
+    );
+    assert_eq!(
+      resolved.denied_commands["plugin:fs|remove"][0].scope_id,
+      Some(8)
+    );
+  }
 
   #[test]
   fn window_glob_pattern_matches() {
