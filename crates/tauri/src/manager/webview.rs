@@ -64,6 +64,14 @@ pub(crate) struct IpcJavascript<'a> {
   pub(crate) isolation_origin: &'a str,
 }
 
+#[cfg(target_os = "android")]
+#[derive(Template)]
+#[default_template("../../scripts/android-legacy-ipc.js")]
+struct AndroidLegacyIpcJavascript<'a> {
+  invoke_key: &'a str,
+  protocol_scheme: &'a str,
+}
+
 /// Uses a custom URI scheme handler to resolve file requests
 pub struct UriSchemeProtocol<R: Runtime> {
   /// Handler for protocol
@@ -183,6 +191,15 @@ impl<R: Runtime> WebviewManager<R> {
         }
       "
       .to_owned(),
+    ));
+    #[cfg(target_os = "android")]
+    all_initialization_scripts.push(main_frame_script(
+      AndroidLegacyIpcJavascript {
+        invoke_key: self.invoke_key(),
+        protocol_scheme: if use_https_scheme { "https" } else { "http" },
+      }
+      .render_default(&Default::default())?
+      .into_string(),
     ));
     all_initialization_scripts.push(main_frame_script(self.invoke_initialization_script.clone()));
     all_initialization_scripts.push(main_frame_script(format!(
